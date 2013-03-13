@@ -24,3 +24,5 @@ Gemfile.lock
 
 ## PROJECT::SPECIFIC
 spec/test-maildir
+
+.idea
