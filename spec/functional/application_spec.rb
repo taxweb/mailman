@@ -2,8 +2,14 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', '/spec_helper')
 
 describe Mailman::Application do
 
+  before do
+    config.watch_maildir = false
+  end
+
   after do
     Mailman.reset_config!
+    listener = @app.instance_variable_get('@listener')
+    listener.stop unless listener.nil?
   end
 
   def send_example
@@ -139,9 +145,45 @@ describe Mailman::Application do
     @app.router.instance_variable_get('@count').should == 2
   end
 
+  it 'should process new messages in the maildir folder on launch' do
+    setup_maildir # creates the maildir with a queued message
+
+    config.maildir = File.join(SPEC_ROOT, 'test-maildir')
+
+    mailman_app {
+      from 'jdoe@machine.example' do
+        @count ||= 0
+        @count += 1
+      end
+    }
+
+    @app.run
+    @app.router.instance_variable_get('@count').should == 1
+
+    FileUtils.rm_rf(config.maildir)
+  end
+
+  it 'should be ready to process a maildir folder before #run is called' do
+    setup_maildir # creates the maildir with a queued message
+
+    config.maildir = File.join(SPEC_ROOT, 'test-maildir')
+    mailman_app {
+      from 'jdoe@machine.example' do
+        @count ||= 0
+        @count += 1
+      end
+    }
+
+    @app.run
+    @app.router.instance_variable_get('@count').should == 1
+
+    FileUtils.rm_rf(config.maildir)
+  end
+
   it 'should watch a maildir folder for messages' do
     setup_maildir # creates the maildir with a queued message
 
+    config.watch_maildir = true
     config.maildir = File.join(SPEC_ROOT, 'test-maildir')
     test_message_path = File.join(config.maildir, 'new', 'message2')
     test_message_path_3 = File.join(config.maildir, 'new', 'message3')
@@ -153,15 +195,15 @@ describe Mailman::Application do
       end
     }
 
-    app_thread = Thread.new { @app.run } # run the app in a separate thread so that fssm doesn't block
-    sleep(0.5)
-    FileUtils.cp(File.join(SPEC_ROOT, 'fixtures', 'example01.eml'), test_message_path) # copy a message into place, triggering fssm handler
-    FileUtils.cp(File.join(SPEC_ROOT, 'fixtures', 'example01.eml'), test_message_path_3) # copy a message into place, triggering fssm handler
+    app_thread = Thread.new { @app.run } # run the app in a separate thread so that listen doesn't block
+    sleep(THREAD_TIMING)
+    FileUtils.cp(File.join(SPEC_ROOT, 'fixtures', 'example01.eml'), test_message_path) # copy a message into place, triggering listen handler
+    FileUtils.cp(File.join(SPEC_ROOT, 'fixtures', 'example01.eml'), test_message_path_3) # copy a message into place, triggering listen handler
     begin
-      Timeout::timeout(2) {
+      Timeout::timeout(THREAD_TIMING) {
         app_thread.join
       }
-    rescue Timeout::Error # wait for fssm handler
+    rescue Timeout::Error # wait for listen handler
     end
     @app.router.instance_variable_get('@count').should == 3
 

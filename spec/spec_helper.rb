@@ -14,6 +14,10 @@ unless defined?(SPEC_ROOT)
   SPEC_ROOT = File.join(File.dirname(__FILE__))
 end
 
+unless defined?(THREAD_TIMING)
+  THREAD_TIMING = (ENV['THREAD_TIMING'] || (defined?(RUBY_ENGINE) && (RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'rbx') ? 2.5 : 2)).to_f
+end
+
 module Mailman::SpecHelpers
 
   def regexp_matcher(pattern)
@@ -26,6 +30,24 @@ module Mailman::SpecHelpers
 
   def basic_message
     Mail.new("To: test@example.com\r\nFrom: chunky@bacon.com\r\nCC: testing@example.com\r\nSubject: Hello!\r\n\r\nemail message\r\n")
+  end
+
+  def multipart_message
+    mail = Mail.new do
+      to   'test@example.com'
+      from 'chunky@bacon.com'
+      subject 'I am a multipart message'
+
+      text_part do
+        body 'This is plain text'
+      end
+
+      html_part do
+        content_type 'text/html; charset=UTF-8'
+        body '<h1>This is HTML</h1>'
+      end
+    end
+
   end
 
   def mailman_app(&block)

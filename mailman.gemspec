@@ -12,20 +12,22 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ['Jonathan Rudenberg']
   s.email       = ['jonathan@titanous.com']
-  s.homepage    = 'http://mailmanrb.com'
+  s.homepage    = 'https://github.com/titanous/mailman'
   s.summary     = 'A incoming email processing microframework'
   s.description = 'Mailman makes it easy to process incoming emails with a simple routing DSL'
+  s.signing_key   = File.expand_path('~/.gem_keys/gem-private_key.pem')
+  s.cert_chain    = ['.gem_cert.pem']
 
   s.rubyforge_project = 'mailman'
 
   s.add_dependency 'mail', '>= 2.0.3'
   s.add_dependency 'activesupport', '>= 2.3.4'
-  s.add_dependency 'fssm', '>= 0.1.4'
+  s.add_dependency 'listen', '>= 0.4.1'
   s.add_dependency 'maildir', '>= 0.5.0'
   s.add_dependency 'i18n', '>= 0.4.1' # fix for mail/activesupport-3 dependency issue
 
-  s.add_development_dependency 'rspec', '~> 2.6.0'
+  s.add_development_dependency 'rspec', '~> 2.10'
 
-  s.files        = Dir.glob('{bin,lib,examples}/**/*') + %w(LICENSE README.md USER_GUIDE.md)
+  s.files        = Dir.glob('{bin,lib,examples}/**/*') + %w(LICENSE README.md USER_GUIDE.md CHANGELOG.md .gem_cert.pem)
   s.require_path = 'lib'
 end
