@@ -39,6 +39,7 @@ module Mailman
       def get_messages
         @connection.each_mail do |message|
           @processor.process(message.pop)
+          message.delete unless message.deleted?
         end
         @connection.delete_all
       end
